@@ -1,8 +1,8 @@
 # 规则来源逐项对照
 
-页面来源：[MetaCubeX / sing/geo](https://github.com/MetaCubeX/meta-rules-dat/tree/sing/geo)。以下按实际分流顺序列出全部 **35 次引用、34 个不同来源**；Netflix IP 保留两次引用。链接指向同源 `classical` 文本，保留域名关键字等类型，不使用只含裸域名的列表。
+我使用 [MetaCubeX/meta-rules-dat](https://github.com/MetaCubeX/meta-rules-dat) 的 `meta/geo` 规则，按分流顺序列出全部 **35 次引用、34 个不同来源**。Netflix IP 在 Netflix 和国外分组中各引用一次。以下链接均指向保留规则类型的 `classical` 文本。
 
-| 分流组 | 页面规则集 ID | 小火箭同源文本 | 加载方式 |
+| 分流组 | 规则集 ID | 上游文本 | 加载方式 |
 | --- | --- | --- | --- |
 | AI | `geosite/category-ai-!cn` | [category-ai-!cn.list](https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/classical/category-ai-!cn.list) | [兼容列表](../rules/compat/category-ai-!cn.list)内联，原正则写在注释中 |
 | Youtube | `geosite/youtube` | [youtube.list](https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/classical/youtube.list) | RULE-SET |
@@ -40,6 +40,6 @@
 | 国内 | `geoip/cn` | [cn.list](https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/classical/cn.list) | RULE-SET，no-resolve |
 | 国内 | `geoip/private` | [private.list](https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/classical/private.list) | RULE-SET，no-resolve |
 
-Test 无远程规则集，使用页面手填的 59 条规则；其他使用 `FINAL,其他`。完整手填条目与分流类别见 [reference/open-box.json](../reference/open-box.json)。Test 原填 `74.125.250.129/24` 已规范为相同网段 `74.125.250.0/24`。
+Test 使用配置内的 59 条规则（56 个域名后缀、1 个精确域名、2 个 IP 网段）；未匹配流量由 `FINAL,其他` 处理。完整条目、分流类别与匹配顺序保存在[规则校验数据](../tests/routing.json)中。
 
-面板 Geo 缓存日期为 2026-10-05，迁移时读取同名来源的当前文本，内容可能已随上游更新。原图和分组对应关系见 [icons.md](./icons.md)。
+远程规则随上游更新；3 份兼容列表由 `scripts/update_compat.py` 更新并内联到主配置。

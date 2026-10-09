@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the recorded Open-Box policy and real upstream rules, not VPN behavior."""
+"""Check routing policies, rule order, and upstream rule coverage."""
 
 import argparse
 import fnmatch
@@ -8,6 +8,7 @@ import json
 import re
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from urllib.parse import urlsplit
 from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -46,16 +47,73 @@ def check_groups(text, reference):
     for line in lines(text):
         name, value = line.split("=", 1)
         name, parts = name.strip(), [part.strip() for part in value.split(",")]
-        assert name not in groups, f"Duplicate group: {name}"
-        assert len(parts) == 4 and parts[0] == "select", f"Unexpected node/group settings: {name}"
-        members = parts[1:3]
-        assert set(members) == {"PROXY", "DIRECT"}, f"Browser outbound copied into {name}"
-        assert re.fullmatch(r"select=[01]", parts[3]), f"Invalid default index: {name}"
-        groups[name] = members[int(parts[3].split("=")[1])]
-    assert list(groups) == reference["proxy_order"] and len(groups) == 14
-    for name, policy in groups.items():
-        assert policy == ("DIRECT" if name == "国内" else "PROXY"), f"Wrong default: {name}"
-    return groups
+        assert name and name not in groups, f"Empty or duplicate group: {name}"
+        assert all(parts) and parts[0] in {"select", "url-test"}, f"Invalid group: {name}"
+        members, options = [], {}
+        for part in parts[1:]:
+            if "=" in part:
+                key, value = part.split("=", 1)
+                assert key not in options and value, f"Empty or duplicate option: {name}: {key}"
+                options[key] = value
+            else:
+                assert not options, f"Member after options: {name}"
+                members.append(part)
+        groups[name] = (parts[0], members, options)
+    services = reference["proxy_order"]
+    assert len(services) == 14 and list(groups)[:14] == services, "Wrong service group order"
+    outbounds = list(groups)[14:]
+    assert groups.get("直连") == ("select", ["DIRECT"], {})
+    assert groups.get("拒绝") == ("select", ["REJECT"], {})
+    defaults = {}
+    for name in services:
+        kind, members, options = groups[name]
+        assert kind == "select" and members == outbounds, f"Missing or reordered outbound: {name}"
+        assert set(options) == {"select"} and re.fullmatch(r"\d+", options["select"]), name
+        index = int(options["select"])
+        assert index < len(members), f"Invalid default index: {name}"
+        defaults[name] = members[index]
+    expected_defaults = {"国内": "直连", "Github": "美国-自动", "Microsoft": "美国-自动",
+                         "Games": "美国-自动", "区块链金融": "新加坡-自动"}
+    for name, selected in defaults.items():
+        assert selected == expected_defaults.get(name, "所有-手动"), f"Wrong default: {name}"
+    for name in outbounds:
+        if name in {"直连", "拒绝"}:
+            continue
+        kind, members, options = groups[name]
+        expected = {"policy-regex-filter"}
+        if kind == "url-test":
+            expected |= {"url", "interval", "tolerance", "timeout"}
+        assert not members and set(options) == expected, f"Invalid outbound options: {name}"
+        re.compile(options["policy-regex-filter"])
+        if kind == "url-test":
+            url = urlsplit(options["url"])
+            assert url.scheme in {"http", "https"} and url.hostname, f"Invalid probe URL: {name}"
+            for key in ("interval", "tolerance", "timeout"):
+                assert re.fullmatch(r"\d+", options[key]), f"Invalid {key}: {name}"
+                assert int(options[key]) >= (0 if key == "tolerance" else 1), name
+    for region in ("所有", "香港", "美国", "台湾", "新加坡", "日本", "韩国"):
+        automatic, manual = groups[region + "-自动"], groups[region + "-手动"]
+        assert automatic[0] == "url-test" and manual[0] == "select", region
+        assert automatic[2]["policy-regex-filter"] == manual[2]["policy-regex-filter"], region
+    return defaults
+
+
+def check_group_failures(text, reference):
+    invalid = [
+        re.sub(r",select=\d+", ",select=999", text, count=1),
+        text.replace("select,直连,", "select,missing-outbound,", 1),
+        re.sub(r"interval=\d+", "interval=0", text, count=1),
+        re.sub(r"(?m)^(所有-手动\s*=\s*select,policy-regex-filter=).+$", r"\1[", text),
+        re.sub(r"(?m)^(所有-手动\s*=\s*select,policy-regex-filter=).+$", r"\1^different$", text),
+    ]
+    for candidate in invalid:
+        assert candidate != text, "Group rejection check did not modify the fixture"
+        try:
+            check_groups(candidate, reference)
+        except (AssertionError, re.error):
+            pass
+        else:
+            raise AssertionError("Accepted invalid group configuration")
 
 
 def check_rules(text, reference, groups):
@@ -74,7 +132,7 @@ def check_rules(text, reference, groups):
     test += [["IP-CIDR", str(ipaddress.ip_network(cidr, strict=False)), "Test", "no-resolve"]
              for cidr in reference["test"]["ip_cidr"]]
     active = [line.split(",") for line in lines(text)]
-    assert active[:len(test)] == test, "Test rules must be first and match the recorded page"
+    assert active[:len(test)] == test, "Test rules must be first and match the routing fixture"
     assert active[-1] == ["FINAL", "其他"] and sum(row[0] == "FINAL" for row in active) == 1
     seen, rules, current = [], [], None
     for line in text.splitlines():
@@ -102,7 +160,7 @@ def check_rules(text, reference, groups):
                 assert options == (["no-resolve"] if kind.startswith("IP-CIDR") else []), line
                 validate([kind, value], source)
             rules.append((kind, value, policy, source))
-    assert seen == expected, "Rule sources, policies, or order differ from the recorded page"
+    assert seen == expected, "Rule sources, policies, or order differ from the routing fixture"
     return rules
 
 
@@ -122,11 +180,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--offline", action="store_true", help="Check local structure only; no upstream/domain coverage claim")
     args = parser.parse_args()
-    reference = json.loads((ROOT / "reference" / "open-box.json").read_text())
+    reference = json.loads((ROOT / "tests" / "routing.json").read_text())
     config = (ROOT / "shadowrocket.conf").read_text()
     assert config.count("[Rule]") == config.count("[Proxy Group]") == 1
     group_text, rule_text = config.split("[Proxy Group]", 1)[1].split("[Rule]", 1)
     groups = check_groups(group_text, reference)
+    check_group_failures(group_text, reference)
     rules = check_rules(rule_text, reference, groups)
     assert matches("DOMAIN-SUFFIX", "apple.com", "apple.com")
     assert matches("DOMAIN-SUFFIX", "apple.com", "www.apple.com")
@@ -134,7 +193,7 @@ def main():
     assert not matches("DOMAIN", "apple.com", "www.apple.com")
     assert matches("DOMAIN-WILDCARD", "a-*.example.com", "a-test.example.com")
     assert not matches("DOMAIN-WILDCARD", "a-*.example.com", "a-test.example.com.evil")
-    print("PASS: 14 service groups, PROXY/DIRECT defaults, no node groups, 35 ordered sources, 3 matching compatibility blocks.", flush=True)
+    print("PASS: 14 service groups, outbound references/defaults/filters, 5 invalid group cases, 35 ordered sources, 3 matching compatibility blocks.", flush=True)
     if args.offline:
         print("OFFLINE ONLY: remote files and domain coverage were not checked.")
         return
