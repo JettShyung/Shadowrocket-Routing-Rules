@@ -182,6 +182,13 @@ def main():
     args = parser.parse_args()
     reference = json.loads((ROOT / "tests" / "routing.json").read_text())
     config = (ROOT / "shadowrocket.conf").read_text()
+    version = (ROOT / "VERSION").read_text().strip()
+    assert re.fullmatch(r"v\d+\.\d+\.\d+", version), "Invalid release version"
+    assert config.startswith(f"# Shadowrocket Routing Rules {version} —"), "Stale config version"
+    readme = (ROOT / "README.md").read_text()
+    assert f"**当前版本：[{version}]" in readme, "Stale README version"
+    assert f"/releases/tag/{version})" in readme, "Stale release link"
+    assert (ROOT / "CHANGELOG.md").read_text().splitlines()[2].startswith(f"## {version} - "), "Missing latest changelog entry"
     assert config.count("[Rule]") == config.count("[Proxy Group]") == 1
     group_text, rule_text = config.split("[Proxy Group]", 1)[1].split("[Rule]", 1)
     groups = check_groups(group_text, reference)
