@@ -1,0 +1,210 @@
+{
+  "source": "Open-Box v0.1.304 (read-only UI)",
+  "observed_date": "2026-10-09",
+  "geo_data_date": "2026-10-05T01:08:09Z",
+  "geo_source": "https://github.com/MetaCubeX/meta-rules-dat/tree/sing/geo",
+  "proxy_order": [
+    "AI",
+    "Google",
+    "Apple",
+    "Youtube",
+    "TikTok",
+    "Netflix",
+    "Github",
+    "Microsoft",
+    "区块链金融",
+    "Games",
+    "国外",
+    "国内",
+    "Test",
+    "其他"
+  ],
+  "routes": [
+    {
+      "name": "Test",
+      "icon": "brand:speedtest",
+      "rule_sets": []
+    },
+    {
+      "name": "AI",
+      "icon": "brand:openai-light",
+      "rule_sets": [
+        "geosite/category-ai-!cn"
+      ]
+    },
+    {
+      "name": "Youtube",
+      "icon": "brand:youtube",
+      "rule_sets": [
+        "geosite/youtube"
+      ]
+    },
+    {
+      "name": "TikTok",
+      "icon": "brand:tiktok",
+      "rule_sets": [
+        "geosite/tiktok",
+        "geosite/tiktok@!cn"
+      ]
+    },
+    {
+      "name": "Netflix",
+      "icon": "brand:netflix-mono",
+      "rule_sets": [
+        "geosite/netflix",
+        "geoip/netflix"
+      ]
+    },
+    {
+      "name": "Google",
+      "icon": "brand:google",
+      "rule_sets": [
+        "geosite/google"
+      ]
+    },
+    {
+      "name": "Github",
+      "icon": "brand:github-mono",
+      "rule_sets": [
+        "geosite/github"
+      ]
+    },
+    {
+      "name": "Microsoft",
+      "icon": "brand:microsoft",
+      "rule_sets": [
+        "geosite/microsoft"
+      ]
+    },
+    {
+      "name": "Apple",
+      "icon": "brand:apple-light",
+      "rule_sets": [
+        "geosite/apple"
+      ]
+    },
+    {
+      "name": "Games",
+      "icon": "misc:game-soft",
+      "rule_sets": [
+        "geosite/steam",
+        "geosite/sony"
+      ]
+    },
+    {
+      "name": "区块链金融",
+      "icon": "brand:binance",
+      "rule_sets": [
+        "geosite/zb",
+        "geosite/okx",
+        "geosite/binance",
+        "geosite/bybit",
+        "geosite/huobi",
+        "geosite/8btc",
+        "geosite/nexo",
+        "geosite/gateio",
+        "geosite/onekey",
+        "geosite/kucoin"
+      ]
+    },
+    {
+      "name": "国外",
+      "icon": "globe:earth-americas",
+      "rule_sets": [
+        "geosite/gfw",
+        "geoip/cloudflare",
+        "geoip/facebook",
+        "geoip/cloudfront",
+        "geoip/fastly",
+        "geoip/google",
+        "geoip/netflix",
+        "geoip/telegram",
+        "geoip/tor",
+        "geoip/twitter"
+      ]
+    },
+    {
+      "name": "国内",
+      "icon": "misc:shield",
+      "rule_sets": [
+        "geosite/cn",
+        "geoip/cn",
+        "geoip/private"
+      ]
+    },
+    {
+      "name": "其他",
+      "icon": "globe:generic",
+      "rule_sets": []
+    }
+  ],
+  "test": {
+    "domain_suffix": [
+      "yalala.com",
+      "whois.pconline.com.cn",
+      "ipip.net",
+      "b0.upaiyun.com",
+      "asn247.net",
+      "astrill.org",
+      "ipinfo.io",
+      "vultr.com",
+      "test-ipv6.com",
+      "ipw.cn",
+      "ipcheck.im",
+      "fast.com",
+      "speedcheck.org",
+      "speedtest.net",
+      "speedtest.cn",
+      "ustc.edu.cn",
+      "dnscheck.tools",
+      "whoer.net",
+      "browserleaks.com",
+      "browserleaks.org",
+      "browserleaks.net",
+      "dnsleaktest.org",
+      "1-b.net",
+      "workers.dev",
+      "jsonp-ip.com",
+      "sspanel.net",
+      "dnsleaktest.com",
+      "browserscan.net",
+      "surfshark.com",
+      "surfsharkdns.com",
+      "ip-api.com",
+      "ipleak.net",
+      "ip-score.com",
+      "888005.xyz",
+      "incolumitas.com",
+      "null-addr.com",
+      "null-addr.net",
+      "null-addr.org",
+      "null-addr.biz",
+      "null-addr.info",
+      "addr.tools",
+      "ifconfig.me",
+      "ip125.com",
+      "skk.moe",
+      "ip111.cn",
+      "ping0.cc",
+      "ip.sb",
+      "ipify.org",
+      "whoer.com",
+      "whatismyip.com.tw",
+      "whatismyip.com",
+      "whoisip.me",
+      "ipaddress.me",
+      "ip2proxy.com",
+      "vpnapi.io",
+      "l.google.com"
+    ],
+    "domain": [
+      "speed.cloudflare.com"
+    ],
+    "ip_cidr": [
+      "142.251.215.0/24",
+      "74.125.250.129/24"
+    ]
+  },
+  "empty_pre_rule": true,
+  "scope": "仅记录分流类别、匹配顺序、规则来源和分流图标；不迁移浏览器出站组或节点选择。"
+}
