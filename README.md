@@ -1,5 +1,9 @@
 # Shadowrocket Routing Rules
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Release](https://img.shields.io/github/v/release/JettShyung/Shadowrocket-Routing-Rules)](https://github.com/JettShyung/Shadowrocket-Routing-Rules/releases)
+[![Last Commit](https://img.shields.io/github/last-commit/JettShyung/Shadowrocket-Routing-Rules)](https://github.com/JettShyung/Shadowrocket-Routing-Rules/commits/main)
+
 **当前版本：[v1.0.0](https://github.com/JettShyung/Shadowrocket-Routing-Rules/releases/tag/v1.0.0)** · [更新记录](./CHANGELOG.md)
 
 这是我维护的 Shadowrocket 分流配置，按服务划分 AI、流媒体、开发工具、游戏平台及国内外流量。我在这里公开配置、规则来源和兼容处理脚本，方便直接使用、检查和按需调整。
